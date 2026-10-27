@@ -104,6 +104,21 @@ at a remote API yourself.
 - **Clean architecture**: repository pattern, dependency injection, typed schemas,
   async throughout, and passing end-to-end tests for both chat and RAG.
 
+## Platform support
+
+| | macOS | Windows | Linux |
+| --- | --- | --- | --- |
+| Run from source in the browser (`start.sh` / `start.ps1`) | ✅ | ✅ | ✅ |
+| Native desktop app (Tauri `.app` / `.dmg`) | ✅ | ❌ not yet | ❌ not yet |
+| Double-click launcher (`make-app.sh`) | ✅ | ❌ | ❌ |
+| Docker | ✅ | ✅ (Docker Desktop) | ✅ |
+
+On Windows, tanAI runs from source: the backend and UI start on your PC and you
+use the app in your browser at http://localhost:3000. Everything still runs
+locally. The native desktop app is macOS-only for now because its build scripts
+are bash, it bundles only `.app`/`.dmg`, and it looks for a backend binary
+without the `.exe` suffix.
+
 ## Getting started with zero terminal experience (macOS)
 
 Never used the "terminal" before? No problem. The terminal is just a text box
@@ -164,7 +179,8 @@ That's it — you're using tanAI.
 **To use it again later:** open Terminal and repeat step 5 only.
 
 > Tip: keep the terminal window open while you use tanAI — closing it stops the
-> app. On Windows, the steps differ; see Option A below and use `start.ps1`.
+> app. On Windows, follow [Getting started on Windows](#getting-started-on-windows)
+> instead.
 
 ### Turn it into a double-click app (macOS)
 
@@ -250,6 +266,102 @@ The tester only needs **Ollama** installed (the app links them to it on first
 run and downloads the models for them) — Python is bundled inside the app.
 Signing + notarization — which removes the warning entirely — needs a paid Apple
 Developer account and is a later step.
+
+---
+
+## Getting started on Windows
+
+These steps are for Windows 10 or 11. You'll paste commands into
+**PowerShell**: press the `Windows` key, type **PowerShell**, and press Enter.
+To paste, right-click inside the window (or press `Ctrl` + `V`), then press
+**Enter**. Steps 1–4 are one-time setup.
+
+**1. Install the tools tanAI needs.** `winget` comes with Windows 10/11. Accept
+any prompts it shows:
+
+```powershell
+winget install -e --id Python.Python.3.12
+winget install -e --id OpenJS.NodeJS.LTS
+winget install -e --id Git.Git
+winget install -e --id Ollama.Ollama
+```
+
+If `winget` isn't recognized, install the four from their websites instead:
+[Python 3.12](https://www.python.org/downloads/windows/) (tick **"Add
+python.exe to PATH"** in the installer), [Node.js LTS](https://nodejs.org),
+[Git](https://git-scm.com/download/win), and [Ollama](https://ollama.com/download/windows).
+
+**Close PowerShell and open a new window** so it picks up the newly installed
+tools. Check they work:
+
+```powershell
+python --version   # should print Python 3.10 or newer
+node --version
+git --version
+ollama --version
+```
+
+**2. Download the AI models.** Ollama runs in the background after install
+(look for the llama icon near the clock; if it's missing, open **Ollama** from
+the Start menu). These downloads are a few gigabytes:
+
+```powershell
+ollama pull qwen2.5:7b
+ollama pull nomic-embed-text
+```
+
+**3. Download tanAI** into your Documents folder:
+
+```powershell
+cd $HOME\Documents
+git clone https://github.com/Tsingh1153/tanAI.git
+```
+
+**4. Allow the launcher script to run.** Windows blocks downloaded PowerShell
+scripts by default. This lets your account run local scripts (only needed once):
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
+Answer **Y** if asked.
+
+**5. Start tanAI** (the only step you repeat each time):
+
+```powershell
+cd $HOME\Documents\tanAI
+.\scripts\start.ps1
+```
+
+The first run creates a Python environment and installs dependencies, which
+takes a few minutes. Two more PowerShell windows open, one for the backend and
+one for the UI. When the UI window shows `Ready`, open **http://localhost:3000**
+in your browser.
+
+**To stop it:** close the two PowerShell windows the script opened (or press
+`Ctrl` + `C` in each).
+
+### Windows notes and limitations
+
+- **No native app or installer yet.** `npm run build` targets macOS only; use
+  the browser version above.
+- **`start-prod.sh` is bash-only**, and the frontend's `npm run build` sets
+  `NODE_OPTIONS` in a Unix-only way, so the optimized production mode doesn't
+  run on Windows as-is. The dev mode that `start.ps1` uses works fine.
+- **`start.ps1` doesn't start Ollama for you.** The Windows Ollama app starts
+  itself at login; if chat says it can't reach Ollama, open Ollama from the
+  Start menu.
+- **Speed tweaks:** to turn on Ollama's flash attention and quantized KV cache,
+  run `setx OLLAMA_FLASH_ATTENTION 1` and `setx OLLAMA_KV_CACHE_TYPE q8_0`,
+  then quit Ollama from its tray icon and reopen it.
+- **OCR:** install [Tesseract](https://github.com/UB-Mannheim/tesseract/wiki)
+  and [Poppler](https://github.com/oschwartz10612/poppler-windows/releases) and add
+  both to your PATH (instead of `brew install`), then
+  `pip install -r backend\requirements-ocr.txt` inside the backend's `.venv`.
+- **macOS-only features:** Apple Foundation Models and the `make-app.sh`
+  double-click launcher don't apply on Windows.
+- **Less tested:** tanAI is developed on macOS. If something breaks on Windows,
+  please open an issue.
 
 ---
 
